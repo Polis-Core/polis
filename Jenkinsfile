@@ -28,61 +28,68 @@ for(int i = 0; i < targets.size(); i++) {
 
       checkout scm
 
-      // restore cache
-      try {
-        copyArtifacts(projectName: "dashpay-dash/${BRANCH_NAME}", optional: true, selector: lastSuccessful(), filter: "ci-cache-${target}.tar.gz")
-      } catch (Exception e) {
-      }
-      if (fileExists("ci-cache-${target}.tar.gz")) {
-        hasCache = true
-        echo "Using cache from dashpay-dash/${BRANCH_NAME}"
-      } else {
-        try {
-          copyArtifacts(projectName: 'dashpay-dash/develop', optional: true, selector: lastSuccessful(), filter: "ci-cache-${target}.tar.gz");
-        } catch (Exception e) {
-        }
-        if (fileExists("ci-cache-${target}.tar.gz")) {
-          hasCache = true
-          echo "Using cache from dashpay-dash/develop"
-        }
-      }
-
       def env = [
         "BUILD_TARGET=${target}",
         "PULL_REQUEST=false",
         "JOB_NUMBER=${BUILD_NUMBER}",
       ]
       withEnv(env) {
-        def builderImageName="dash-builder-${target}"
+        def builderImageName="polis-builder-${target}"
 
         def builderImage
         stage("${target}/builder-image") {
           builderImage = docker.build("${builderImageName}", "--build-arg BUILD_TARGET=${target} ci -f ci/Dockerfile.builder")
         }
 
-        if (hasCache) {
-          sh "cd ${pwd} && tar xzfv ci-cache-${target}.tar.gz"
-        } else {
-          sh "mkdir -p ${pwd}/ci-cache-${target}"
-        }
-
         builderImage.inside("-t") {
+          // copy source into fixed path
+          // we must build under the same path everytime as otherwise caches won't work properly
+          sh "cp -ra ${pwd}/. /polis-src/"
+
+          // restore cache
+          def hasCache = false
+          try {
+            copyArtifacts(projectName: "polispay-polis/${BRANCH_NAME}", optional: true, selector: lastSuccessful(), filter: "ci-cache-${target}.tar.gz")
+          } catch (Exception e) {
+          }
+          if (fileExists("ci-cache-${target}.tar.gz")) {
+            hasCache = true
+            echo "Using cache from polispay-polis/${BRANCH_NAME}"
+          } else {
+            try {
+              copyArtifacts(projectName: 'polispay-polis/develop', optional: true, selector: lastSuccessful(), filter: "ci-cache-${target}.tar.gz");
+            } catch (Exception e) {
+            }
+            if (fileExists("ci-cache-${target}.tar.gz")) {
+              hasCache = true
+              echo "Using cache from polispay-polis/develop"
+            }
+          }
+
+          if (hasCache) {
+            sh "cd /polis-src && tar xzf ${pwd}/ci-cache-${target}.tar.gz"
+          } else {
+            sh "mkdir -p /polis-src/ci-cache-${target}"
+          }
+
           stage("${target}/depends") {
-            sh './ci/build_depends.sh'
+            sh 'cd /polis-src && ./ci/build_depends.sh'
           }
           stage("${target}/build") {
-            sh './ci/build_src.sh'
+            sh 'cd /polis-src && ./ci/build_src.sh'
           }
           stage("${target}/test") {
-            sh './ci/test_unittests.sh'
+            sh 'cd /polis-src && ./ci/test_unittests.sh'
           }
           stage("${target}/test") {
-            sh './ci/test_integrationtests.sh'
+            sh 'cd /polis-src && ./ci/test_integrationtests.sh'
           }
+
+          // archive cache and copy it into the jenkins workspace
+          sh "cd /polis-src && tar czfv ci-cache-${target}.tar.gz ci-cache-${target} && cp ci-cache-${target}.tar.gz ${pwd}/"
         }
 
-        // archive cache
-        sh "tar czfv ci-cache-${target}.tar.gz ci-cache-${target}"
+        // upload cache
         archiveArtifacts artifacts: "ci-cache-${target}.tar.gz", fingerprint: true
       }
     }

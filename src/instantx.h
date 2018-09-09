@@ -26,15 +26,7 @@ extern CInstantSend instantsend;
     (1000/2900.0)**5 = 0.004875397277841433
 */
 
-// The INSTANTSEND_DEPTH is the "pseudo block depth" level assigned to locked
-// txs to indicate the degree of confidence in their eventual confirmation and
-// inability to be double-spent (adjustable via command line argument)
-static const int MIN_INSTANTSEND_DEPTH              = 0;
-static const int MAX_INSTANTSEND_DEPTH              = 60;
-/// Default number of "pseudo-confirmations" for an InstantSend tx
-static const int DEFAULT_INSTANTSEND_DEPTH          = 5;
-
-static const int MIN_INSTANTSEND_PROTO_VERSION      = 70208;
+static const int MIN_INSTANTSEND_PROTO_VERSION      = 70210;
 
 /// For how long we are going to accept votes/locks
 /// after we saw the first one for a specific transaction
@@ -145,8 +137,6 @@ public:
     bool IsLockedInstantSendTransaction(const uint256& txHash);
     /// Get the actual number of accepted lock signatures
     int GetTransactionLockSignatures(const uint256& txHash);
-    /// Get instantsend confirmations (only)
-    int GetConfirmations(const uint256 &nTXHash);
 
     /// Remove expired entries from maps
     void CheckAndRemove();
@@ -159,6 +149,8 @@ public:
     void SyncTransaction(const CTransaction& tx, const CBlockIndex *pindex, int posInBlock);
 
     std::string ToString() const;
+
+    void DoMaintenance() { CheckAndRemove(); }
 };
 
 /**

@@ -17,7 +17,7 @@
 
 #include <QTimer>
 #include <QMessageBox>
-
+#include <rpc/protocol.h>
 
 
 GovernanceList::GovernanceList(const PlatformStyle *platformStyle, QWidget *parent) :
@@ -85,17 +85,26 @@ void GovernanceList::on_voteYesButton_clicked()
     if(retval != QMessageBox::Yes) return;
 
     WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();
+    std::string strVoteSignal =  "funding";
+    std::string strVoteOutcome = "yes";
+    vote_signal_enum_t eVoteSignal = CGovernanceVoting::ConvertVoteSignal(strVoteSignal);
+    if (eVoteSignal == VOTE_SIGNAL_NONE) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER,
+                           "Invalid vote signal. Please using one of the following: "
+                           "(funding|valid|delete|endorsed)");
+    }
 
+    vote_outcome_enum_t eVoteOutcome = CGovernanceVoting::ConvertVoteOutcome(strVoteOutcome);
+    if (eVoteOutcome == VOTE_OUTCOME_NONE) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid vote outcome. Please use one of the following: 'yes', 'no' or 'abstain'");
+    }
     if(encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForMixingOnly) {
         WalletModel::UnlockContext ctx(walletModel->requestUnlock());
-
         if(!ctx.isValid()) return; // Unlock wallet was cancelled
-        vote_outcome_enum_t VoteValue = vote_outcome_enum_t(1);
-        Vote(parsedGobjectHash, VoteValue);
+        Vote(masternodeConfig.getEntries(), parsedGobjectHash, eVoteSignal, eVoteOutcome);
         return;
     }
-    vote_outcome_enum_t VoteValue = vote_outcome_enum_t(1);
-    Vote(parsedGobjectHash, VoteValue);
+    Vote(masternodeConfig.getEntries(), parsedGobjectHash, eVoteSignal, eVoteOutcome );
 }
 
 void GovernanceList::on_voteNoButton_clicked()
@@ -123,19 +132,27 @@ void GovernanceList::on_voteNoButton_clicked()
                                                                QMessageBox::Cancel);
 
     if(retval != QMessageBox::Yes) return;
-
     WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();
+    std::string strVoteSignal =  "funding";
+    std::string strVoteOutcome = "no";
+    vote_signal_enum_t eVoteSignal = CGovernanceVoting::ConvertVoteSignal(strVoteSignal);
+    if (eVoteSignal == VOTE_SIGNAL_NONE) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER,
+                           "Invalid vote signal. Please using one of the following: "
+                           "(funding|valid|delete|endorsed)");
+    }
 
+    vote_outcome_enum_t eVoteOutcome = CGovernanceVoting::ConvertVoteOutcome(strVoteOutcome);
+    if (eVoteOutcome == VOTE_OUTCOME_NONE) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid vote outcome. Please use one of the following: 'yes', 'no' or 'abstain'");
+    }
     if(encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForMixingOnly) {
         WalletModel::UnlockContext ctx(walletModel->requestUnlock());
-
         if(!ctx.isValid()) return; // Unlock wallet was cancelled
-        vote_outcome_enum_t VoteValue = vote_outcome_enum_t(2);
-        Vote(parsedGobjectHash, VoteValue);
+        Vote(masternodeConfig.getEntries(), parsedGobjectHash, eVoteSignal, eVoteOutcome);
         return;
     }
-    vote_outcome_enum_t VoteValue = vote_outcome_enum_t(2);
-    Vote(parsedGobjectHash, VoteValue);
+    Vote(masternodeConfig.getEntries(), parsedGobjectHash, eVoteSignal, eVoteOutcome );
 }
 
 void GovernanceList::on_voteAbstainButton_clicked()
@@ -146,9 +163,7 @@ void GovernanceList::on_voteAbstainButton_clicked()
         // Find selected gobject
         QItemSelectionModel* selectionModel = ui->tableWidgetGobjects->selectionModel();
         QModelIndexList selected = selectionModel->selectedRows();
-
         if(selected.count() == 0) return;
-
         QModelIndex index = selected.at(0);
         int nSelectedRow = index.row();
         gobjectSingle = ui->tableWidgetGobjects->item(nSelectedRow, 0)->text().toStdString();
@@ -165,40 +180,48 @@ void GovernanceList::on_voteAbstainButton_clicked()
     if(retval != QMessageBox::Yes) return;
 
     WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();
+    std::string strVoteSignal =  "funding";
+    std::string strVoteOutcome = "abstain";
+    vote_signal_enum_t eVoteSignal = CGovernanceVoting::ConvertVoteSignal(strVoteSignal);
+    if (eVoteSignal == VOTE_SIGNAL_NONE) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER,
+                           "Invalid vote signal. Please using one of the following: "
+                           "(funding|valid|delete|endorsed)");
+    }
 
+    vote_outcome_enum_t eVoteOutcome = CGovernanceVoting::ConvertVoteOutcome(strVoteOutcome);
+    if (eVoteOutcome == VOTE_OUTCOME_NONE) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid vote outcome. Please use one of the following: 'yes', 'no' or 'abstain'");
+    }
     if(encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForMixingOnly) {
         WalletModel::UnlockContext ctx(walletModel->requestUnlock());
-
         if(!ctx.isValid()) return; // Unlock wallet was cancelled
-        vote_outcome_enum_t VoteValue = vote_outcome_enum_t(3);
-        Vote(parsedGobjectHash, VoteValue);
+        Vote(masternodeConfig.getEntries(), parsedGobjectHash, eVoteSignal, eVoteOutcome);
         return;
     }
-    vote_outcome_enum_t VoteValue = vote_outcome_enum_t(3);
-    Vote(parsedGobjectHash, VoteValue);
+    Vote(masternodeConfig.getEntries(), parsedGobjectHash, eVoteSignal, eVoteOutcome );
 }
 
-void GovernanceList::Vote(uint256 nHash, vote_outcome_enum_t eVoteOutcome)
+void GovernanceList::Vote(const std::vector<CMasternodeConfig::CMasternodeEntry>& entries,
+                          const uint256& hash, vote_signal_enum_t eVoteSignal,
+                          vote_outcome_enum_t eVoteOutcome)
 {
     int nSuccessful = 0;
     int nFailed = 0;
-    int nStatus = 0;
-    vote_signal_enum_t eVoteSignal = CGovernanceVoting::ConvertVoteSignal("funding");
 
-    for (const auto& mne : masternodeConfig.getEntries()) {
-        std::string strError;
-        std::vector<unsigned char> vchMasterNodeSignature;
-        std::string strMasterNodeSignMessage;
+    UniValue resultsObj(UniValue::VOBJ);
 
-        CPubKey pubKeyCollateralAddress;
-        CKey keyCollateralAddress;
-        CPubKey pubKeyMasternode;
-        CKey keyMasternode;
+    for (const auto& mne : entries) {
+        CPubKey pubKeyOperator;
+        CKey keyOperator;
 
+        UniValue statusObj(UniValue::VOBJ);
 
-        if(!CMessageSigner::GetKeysFromSecret(mne.getPrivKey(), keyMasternode, pubKeyMasternode)){
+        if (!CMessageSigner::GetKeysFromSecret(mne.getPrivKey(), keyOperator, pubKeyOperator)) {
             nFailed++;
-            nStatus = 100;
+            statusObj.push_back(Pair("result", "failed"));
+            statusObj.push_back(Pair("errorMessage", "Masternode signing error, could not set key correctly"));
+            resultsObj.push_back(Pair(mne.getAlias(), statusObj));
             continue;
         }
 
@@ -206,7 +229,7 @@ void GovernanceList::Vote(uint256 nHash, vote_outcome_enum_t eVoteOutcome)
         nTxHash.SetHex(mne.getTxHash());
 
         int nOutputIndex = 0;
-        if(!ParseInt32(mne.getOutputIndex(), &nOutputIndex)) {
+        if (!ParseInt32(mne.getOutputIndex(), &nOutputIndex)) {
             continue;
         }
 
@@ -215,31 +238,38 @@ void GovernanceList::Vote(uint256 nHash, vote_outcome_enum_t eVoteOutcome)
         CMasternode mn;
         bool fMnFound = mnodeman.Get(outpoint, mn);
 
-        if(!fMnFound) {
+        if (!fMnFound) {
             nFailed++;
-            nStatus = 200;
+            statusObj.push_back(Pair("result", "failed"));
+            statusObj.push_back(Pair("errorMessage", "Can't find masternode by collateral output"));
+            resultsObj.push_back(Pair(mne.getAlias(), statusObj));
             continue;
         }
 
-        CGovernanceVote vote(mn.outpoint, nHash, eVoteSignal, eVoteOutcome);
-        if(!vote.Sign(keyMasternode, pubKeyMasternode)){
+        CGovernanceVote vote(mn.outpoint, hash, eVoteSignal, eVoteOutcome);
+        if (!vote.Sign(keyOperator, pubKeyOperator.GetID())) {
             nFailed++;
-            nStatus = 300;
+            statusObj.push_back(Pair("result", "failed"));
+            statusObj.push_back(Pair("errorMessage", "Failure to sign."));
+            resultsObj.push_back(Pair(mne.getAlias(), statusObj));
             continue;
         }
 
         CGovernanceException exception;
-        if(governance.ProcessVoteAndRelay(vote, exception, *g_connman)) {
+        if (governance.ProcessVoteAndRelay(vote, exception, *g_connman)) {
             nSuccessful++;
-        }
-        else {
+            statusObj.push_back(Pair("result", "success"));
+        } else {
             nFailed++;
-            nStatus = 400;
+            statusObj.push_back(Pair("result", "failed"));
+            statusObj.push_back(Pair("errorMessage", exception.GetMessage()));
         }
 
+        resultsObj.push_back(Pair(mne.getAlias(), statusObj));
     }
+
     std::string returnObj;
-    returnObj = strprintf("Successfully vote %d masternodes, failed to vote %d, total %d. Error Code:%d", nSuccessful, nFailed, nFailed + nSuccessful, nStatus);
+    returnObj = strprintf("Successfully vote %d masternodes, failed to vote %d, total %d", nSuccessful, nFailed,nFailed + nSuccessful);
     QMessageBox msg;
     msg.setText(QString::fromStdString(returnObj));
     msg.exec();
@@ -405,25 +435,7 @@ void GovernanceList::ShowGovernanceObject(uint256 gobjectSingle) {
     if(!walletModel || !walletModel->getOptionsModel())
         return;
 
-    // Get private key for this alias
-    //std::string strMNPrivKey = "";
-    //std::string strCollateral = "";
-    //std::string strIP = "";
     CGovernanceObject* pGovObj = governance.FindGovernanceObject(gobjectSingle);
-
-    //bool fFound = false;
-    //for (const auto& mne : masternodeConfig.getEntries()) {
-    //    if (gobjectSingle != pGobObj.FindGovernanceObject()) {
-    //        continue;
-    //    }
-    //    else {
-    //        strMNPrivKey = mne.getPrivKey();
-    //        strCollateral = mne.getTxHash() + "-" + mne.getOutputIndex();
-    //        strIP = mne.getIp();
-    //        fFound = mnodeman.Get(COutPoint(uint256S(mne.getTxHash()), atoi(mne.getOutputIndex())), mn);
-    //        break;
-    //    }
-    //}
 
     // Title of popup window
     QString strWindowtitle = tr("Additional information for Governance Object");
@@ -475,11 +487,6 @@ void GovernanceList::ShowGovernanceObject(uint256 gobjectSingle) {
     strHTML += "<p><b>" + tr("Endorse Votes") +":</b>" + "<br><span>Yes: " + GUIUtil::HtmlEscape(EndorseYes) + "</span>" + "<br><span>No: " + GUIUtil::HtmlEscape(EndorseNo) + "</span>" + "<br><span>Abstain: " + GUIUtil::HtmlEscape(EndorseAbstain) + "</span>" + "<br><span>Absolute Yes: " + GUIUtil::HtmlEscape(EndorseAbYes) + "</span></p>";
     strHTML += "<b>" + tr("Raw Information (Hex)") +     ": </b>" + GUIUtil::HtmlEscape(dataHex) + "<br>";
     strHTML += "<b>" + tr("Raw Information (String)") +     ": </b>" + GUIUtil::HtmlEscape(dataString) + "<br>";
-    //strHTML += "<b>" + tr("Sentinel") +     ": </b>" + (mn.lastPing.nSentinelVersion > DEFAULT_SENTINEL_VERSION ? GUIUtil::HtmlEscape(SafeIntVersionToString(mn.lastPing.nSentinelVersion)) : tr("Unknown")) + "<br>";
-    //strHTML += "<b>" + tr("Status") +       ": </b>" + GUIUtil::HtmlEscape(CMasternode::StateToString(mn.nActiveState)) + "<br>";
-    //strHTML += "<b>" + tr("Payee") +        ": </b>" + GUIUtil::HtmlEscape(CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString()) + "<br>";
-    //strHTML += "<b>" + tr("Active") +       ": </b>" + GUIUtil::HtmlEscape(DurationToDHMS(mn.lastPing.sigTime - mn.sigTime)) + "<br>";
-    //strHTML += "<b>" + tr("Last Seen") +    ": </b>" + GUIUtil::HtmlEscape(DateTimeStrFormat("%Y-%m-%d %H:%M", mn.lastPing.sigTime + GetOffsetFromUtc())) + "<br>";
 
     // Open Governance dialog
     GovernanceDialog *dialog = new GovernanceDialog(this);

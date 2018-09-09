@@ -15,7 +15,7 @@ extern CPrivateSendServer privateSendServer;
 
 /** Used to keep track of current status of mixing pool
  */
-class CPrivateSendServer : public CPrivateSendBase
+class CPrivateSendServer : public CPrivateSendBaseSession, public CPrivateSendBaseManager
 {
 private:
     // Mixing uses collateral transactions to trust parties entering the pool
@@ -66,15 +66,14 @@ private:
     void SetNull();
 
 public:
-    CPrivateSendServer() :
-        fUnitTest(false) { SetNull(); }
+    CPrivateSendServer() : vecSessionCollaterals(), fUnitTest(false) {}
 
     void ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv, CConnman& connman);
 
     void CheckTimeout(CConnman& connman);
     void CheckForCompleteQueue(CConnman& connman);
-};
 
-void ThreadCheckPrivateSendServer(CConnman& connman);
+    void DoMaintenance(CConnman& connman);
+};
 
 #endif

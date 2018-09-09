@@ -435,6 +435,11 @@ See detailed [change log](https://github.com/polispay/polis/compare/v0.12.2.3...
 - See commit list [here](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.12.3-backports.md)
 
 
+Python Support
+--------------
+
+Support for Python 2 has been discontinued for all test files and tools.
+
 Credits
 =======
 
@@ -470,14 +475,14 @@ Polis Core tree 0.12.1.x was a fork of Bitcoin Core tree 0.12.
 
 These release are considered obsolete. Old release notes can be found here:
 
-- [v0.12.3.1](https://github.com/dashpay/dash/blob/master/doc/release-notes/dash/release-notes-0.12.3.1.md) released Jul/03/2018
-- [v0.12.2.3](https://github.com/dashpay/dash/blob/master/doc/release-notes/dash/release-notes-0.12.2.3.md) released Jan/12/2018
-- [v0.12.2.2](https://github.com/dashpay/dash/blob/master/doc/release-notes/dash/release-notes-0.12.2.2.md) released Dec/17/2017
-- [v0.12.2](https://github.com/dashpay/dash/blob/master/doc/release-notes/dash/release-notes-0.12.2.md) released Nov/08/2017
-- [v0.12.1](https://github.com/dashpay/dash/blob/master/doc/release-notes/dash/release-notes-0.12.1.md) released Feb/06/2017
-- [v0.12.0](https://github.com/dashpay/dash/blob/master/doc/release-notes/dash/release-notes-0.12.0.md) released Jun/15/2015
-- [v0.11.2](https://github.com/dashpay/dash/blob/master/doc/release-notes/dash/release-notes-0.11.2.md) released Mar/04/2015
-- [v0.11.1](https://github.com/dashpay/dash/blob/master/doc/release-notes/dash/release-notes-0.11.1.md) released Feb/10/2015
-- [v0.11.0](https://github.com/dashpay/dash/blob/master/doc/release-notes/dash/release-notes-0.11.0.md) released Jan/15/2015
-- [v0.10.x](https://github.com/dashpay/dash/blob/master/doc/release-notes/dash/release-notes-0.10.0.md) released Sep/25/2014
-- [v0.9.x](https://github.com/dashpay/dash/blob/master/doc/release-notes/dash/release-notes-0.9.0.md) released Mar/13/2014
+- [v0.12.3.1](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.12.3.1.md) released Jul/03/2018
+- [v0.12.2.3](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.12.2.3.md) released Jan/12/2018
+- [v0.12.2.2](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.12.2.2.md) released Dec/17/2017
+- [v0.12.2](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.12.2.md) released Nov/08/2017
+- [v0.12.1](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.12.1.md) released Feb/06/2017
+- [v0.12.0](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.12.0.md) released Aug/15/2015
+- [v0.11.2](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.11.2.md) released Mar/04/2015
+- [v0.11.1](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.11.1.md) released Feb/10/2015
+- [v0.11.0](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.11.0.md) released Jan/15/2015
+- [v0.10.x](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.10.0.md) released Sep/25/2014
+- [v0.9.x](https://github.com/polispay/polis/blob/master/doc/release-notes/polis/release-notes-0.9.0.md) released Mar/13/2014

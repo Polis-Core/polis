@@ -10,6 +10,7 @@
 #include <QMenu>
 #include <QTimer>
 #include <QWidget>
+#include <masternodeconfig.h>
 
 #define GOBJECT_UPDATE_SECONDS                 15
 #define GOBJECT_COOLDOWN_SECONDS               3
@@ -38,7 +39,9 @@ public:
     void setClientModel(ClientModel *clientModel);
     void setWalletModel(WalletModel *walletModel);
     void ShowGovernanceObject(uint256 gobjectSingle);
-    void Vote(uint256 nHash, vote_outcome_enum_t eVoteOutcome);
+    void Vote(const std::vector<CMasternodeConfig::CMasternodeEntry> &entries,
+              const uint256& hash, vote_signal_enum_t eVoteSignal,
+              vote_outcome_enum_t eVoteOutcome);
 
 
 private:

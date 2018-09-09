@@ -25,7 +25,7 @@ class CGovernanceObject;
 class CGovernanceVote;
 
 static const int MAX_GOVERNANCE_OBJECT_DATA_SIZE = 16 * 1024;
-static const int MIN_GOVERNANCE_PEER_PROTO_VERSION = 70208;
+static const int MIN_GOVERNANCE_PEER_PROTO_VERSION = 70210;
 static const int GOVERNANCE_FILTER_PROTO_VERSION = 70206;
 
 static const double GOVERNANCE_FILTER_FP_RATE = 0.001;
@@ -194,8 +194,6 @@ public:
 
     CGovernanceObject(const CGovernanceObject& other);
 
-    void swap(CGovernanceObject& first, CGovernanceObject& second); // nothrow
-
     // Public Getter methods
 
     int64_t GetCreationTime() const {
@@ -253,8 +251,8 @@ public:
     // Signature related functions
 
     void SetMasternodeOutpoint(const COutPoint& outpoint);
-    bool Sign(const CKey& keyMasternode, const CPubKey& pubKeyMasternode);
-    bool CheckSignature(const CPubKey& pubKeyMasternode) const;
+    bool Sign(const CKey& key, const CKeyID& keyID);
+    bool CheckSignature(const CKeyID& keyID) const;
 
     std::string GetSignatureMessage() const;
     uint256 GetSignatureHash() const;
@@ -353,12 +351,6 @@ public:
         }
 
         // AFTER DESERIALIZATION OCCURS, CACHED VARIABLES MUST BE CALCULATED MANUALLY
-    }
-
-    CGovernanceObject& operator=(CGovernanceObject from)
-    {
-        swap(*this, from);
-        return *this;
     }
 
 private:
