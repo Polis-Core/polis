@@ -117,6 +117,8 @@ protected:
     int nPoolMaxTransactions;
     int nFulfilledRequestExpireTime;
     std::string strSporkAddress;
+
+
 };
 
 /**

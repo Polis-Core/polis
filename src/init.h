@@ -7,9 +7,11 @@
 #define BITCOIN_INIT_H
 
 #include <string>
+#include <map>
 
 class CScheduler;
 class CWallet;
+extern std::map<unsigned int, unsigned int> mapHashedBlocks;
 
 namespace boost
 {

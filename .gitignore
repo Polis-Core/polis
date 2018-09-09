@@ -133,3 +133,5 @@ make
 # CLion
 .idea
 cmake-build-debug
+
+qa/pull-tester/run-bitcoind-for-test\.sh

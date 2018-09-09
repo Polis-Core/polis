@@ -48,7 +48,6 @@
 #endif
 
 #ifdef WIN32
-#define MSG_DONTWAIT        0
 #else
 typedef u_int SOCKET;
 #include "errno.h"
@@ -77,6 +76,17 @@ typedef u_int SOCKET;
 // As Solaris does not have the MSG_NOSIGNAL flag for send(2) syscall, it is defined as 0
 #if !defined(HAVE_MSG_NOSIGNAL) && !defined(MSG_NOSIGNAL)
 #define MSG_NOSIGNAL 0
+#endif
+
+#ifndef WIN32
+// PRIO_MAX is not defined on Solaris
+#ifndef PRIO_MAX
+#define PRIO_MAX 20
+#endif
+#define THREAD_PRIORITY_LOWEST          PRIO_MAX
+#define THREAD_PRIORITY_BELOW_NORMAL    2
+#define THREAD_PRIORITY_NORMAL          0
+#define THREAD_PRIORITY_ABOVE_NORMAL    (-2)
 #endif
 
 #if HAVE_DECL_STRNLEN == 0

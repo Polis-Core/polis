@@ -150,6 +150,13 @@ public:
         consensus.fPowNoRetargeting = false;
         consensus.nPowKGWHeight = 551;
         consensus.nPowDGWHeight = 551;
+
+        // Stake rules
+        consensus.nLastPoWBlock = 200;
+        consensus.nStakeMinAge = 60 * 60;
+        consensus.nCoinbaseMaturity = 15;
+
+
         consensus.nRuleChangeActivationThreshold = 1916; // 95% of 2016
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
@@ -302,6 +309,12 @@ public:
         consensus.fPowNoRetargeting = false;
         consensus.nPowKGWHeight = 4001; // nPowKGWHeight >= nPowDGWHeight means "no KGW"
         consensus.nPowDGWHeight = 4001;
+
+        // Stake rules
+        consensus.nLastPoWBlock = 200;
+        consensus.nStakeMinAge = 60 * 60;
+        consensus.nCoinbaseMaturity = 15;
+
         consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;

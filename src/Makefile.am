@@ -132,6 +132,7 @@ BITCOIN_CORE_H = \
   init.h \
   instantx.h \
   key.h \
+  kernel.h \
   keepass.h \
   keystore.h \
   dbwrapper.h \
@@ -296,6 +297,7 @@ libpolis_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
 libpolis_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpolis_wallet_a_SOURCES = \
   keepass.cpp \
+  kernel.cpp \
   privatesend-client.cpp \
   privatesend-util.cpp \
   wallet/crypter.cpp \
@@ -430,6 +432,7 @@ libpolis_util_a_SOURCES = \
   support/cleanse.cpp \
   sync.cpp \
   threadinterrupt.cpp \
+  tposutils.cpp \
   util.cpp \
   utilmoneystr.cpp \
   utilstrencodings.cpp \
@@ -465,7 +468,6 @@ polisd_LDADD = \
   $(LIBBITCOIN_SERVER) \
   $(LIBBITCOIN_COMMON) \
   $(LIBUNIVALUE) \
-  $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_WALLET) \
   $(LIBBITCOIN_ZMQ) \
   $(LIBBITCOIN_CONSENSUS) \
@@ -474,6 +476,7 @@ polisd_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
+polisd_LDADD += $(LIBBITCOIN_UTIL)
 polisd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
 # polis-cli binary #

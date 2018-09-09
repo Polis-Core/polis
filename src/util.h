@@ -149,6 +149,7 @@ boost::filesystem::path GetSpecialFolderPath(int nFolder, bool fCreate = true);
 void OpenDebugLog();
 void ShrinkDebugFile();
 void runCommand(const std::string& strCommand);
+void SetThreadPriority(int nPriority);
 
 inline bool IsSwitchChar(char c)
 {
