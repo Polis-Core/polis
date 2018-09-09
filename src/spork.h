@@ -26,13 +26,12 @@ static const int SPORK_9_SUPERBLOCKS_ENABLED                            = 10008;
 static const int SPORK_10_MASTERNODE_PAY_UPDATED_NODES                  = 10009;
 static const int SPORK_12_RECONSIDER_BLOCKS                             = 10011;
 static const int SPORK_14_REQUIRE_SENTINEL_FLAG                         = 10013;
-static const int SPORK_15_MASTERNODE_LOCK_NUMBER                        = 10014;
+static const int SPORK_15_DETERMINISTIC_MNS_ENABLED                     = 10014;
 
 static const int SPORK_START                                            = SPORK_2_INSTANTSEND_ENABLED;
-static const int SPORK_END                                              = SPORK_15_MASTERNODE_LOCK_NUMBER;
+static const int SPORK_END                                              = SPORK_15_DETERMINISTIC_MNS_ENABLED;
 
 extern std::map<int, int64_t> mapSporkDefaults;
-extern std::map<uint256, CSporkMessage> mapSporks;
 extern CSporkManager sporkManager;
 
 //
@@ -78,8 +77,8 @@ public:
     uint256 GetHash() const;
     uint256 GetSignatureHash() const;
 
-    bool Sign(const CKey& key);
-    bool CheckSignature(const CKeyID& pubKeyId) const;
+    bool Sign(const CKey& key, bool fSporkSixActive);
+    bool CheckSignature(const CKeyID& pubKeyId, bool fSporkSixActive) const;
     void Relay(CConnman& connman);
 };
 
@@ -87,7 +86,8 @@ public:
 class CSporkManager
 {
 private:
-    std::vector<unsigned char> vchSig;
+    mutable CCriticalSection cs;
+    std::map<uint256, CSporkMessage> mapSporksByHash;
     std::map<int, CSporkMessage> mapSporksActive;
 
     CKeyID sporkPubKeyID;
@@ -96,6 +96,20 @@ private:
 public:
 
     CSporkManager() {}
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(sporkPubKeyID);
+        READWRITE(mapSporksByHash);
+        READWRITE(mapSporksActive);
+        // we don't serialize private key to prevent its leakage
+    }
+
+    void Clear();
+    /// Dummy implementation for CFlatDB
+    void CheckAndRemove() {}
 
     void ProcessSpork(CNode* pfrom, const std::string& strCommand, CDataStream& vRecv, CConnman& connman);
     void ExecuteSpork(int nSporkID, int nValue);
@@ -106,8 +120,12 @@ public:
     int GetSporkIDByName(const std::string& strName);
     std::string GetSporkNameByID(int nSporkID);
 
+    bool GetSporkByHash(const uint256& hash, CSporkMessage &sporkRet);
+
     bool SetSporkAddress(const std::string& strAddress);
     bool SetPrivKey(const std::string& strPrivKey);
+
+    std::string ToString() const;
 };
 
 #endif
