@@ -138,7 +138,7 @@ void protx_register_help()
             "A few of the limitations you see in the arguments are temporary and might be lifted after DIP3\n"
             "is fully deployed.\n"
             "\nArguments:\n"
-            "1. \"collateralAddress\"   (string, required) The dash address to send the collateral to.\n"
+            "1. \"collateralAddress\"   (string, required) The polis address to send the collateral to.\n"
             "                         Must be a P2PKH address.\n"
             "2. \"collateralAmount\"    (numeric or string, required) The collateral amount.\n"
             "                         Must be exactly 1000 Dash.\n"
@@ -157,7 +157,7 @@ void protx_register_help()
             "                         If set to \"0\" or an empty string, ownerAddr will be used.\n"
             "8. \"operatorReward\"      (numeric, required) The fraction in %% to share with the operator. If non-zero,\n"
             "                         \"ipAndPort\" and \"protocolVersion\" must be zero as well. The value must be between 0 and 100.\n"
-            "9. \"payoutAddress\"       (string, required) The dash address to use for masternode reward payments\n"
+            "9. \"payoutAddress\"       (string, required) The polis address to use for masternode reward payments\n"
             "                         Must match \"collateralAddress\"."
             "\nExamples:\n"
             + HelpExampleCli("protx", "register \"XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwG\" 1000 \"1.2.3.4:1234\" 0 \"93Fd7XY2zF4q9YKTZUSFxLgp4Xs7MuaMnvY9kpvH7V8oXWqsCC1\" XwnLY9Tf7Zsef8gMGL2fhWA9ZmMjt4KPwG")
@@ -178,7 +178,7 @@ UniValue protx_register(const JSONRPCRequest& request)
     if (!ParseMoney(request.params[2].get_str(), collateralAmount))
         throw std::runtime_error(strprintf("invalid collateral amount %s", request.params[2].get_str()));
     if (collateralAmount != 1000 * COIN)
-        throw std::runtime_error(strprintf("invalid collateral amount %d. only 1000 DASH is supported at the moment", collateralAmount));
+        throw std::runtime_error(strprintf("invalid collateral amount %d. only 1000 POLIS is supported at the moment", collateralAmount));
 
     CTxOut collateralTxOut(collateralAmount, collateralScript);
 
@@ -322,7 +322,7 @@ void protx_update_registrar_help()
             "3. \"votingKeyAddr\"       (string, required) The voting key address. The private key does not have to be known by your wallet.\n"
             "                         It has to match the private key which is later used when voting on proposals.\n"
             "                         If set to \"0\" or an empty string, the last on-chain voting key of the masternode will be used.\n"
-            "5. \"payoutAddress\"       (string, required) The dash address to use for masternode reward payments\n"
+            "5. \"payoutAddress\"       (string, required) The polis address to use for masternode reward payments\n"
             "                         Must match \"collateralAddress\" of initial ProRegTx.\n"
             "                         If set to \"0\" or an empty string, the last on-chain payout address of the masternode will be used.\n"
             "\nExamples:\n"

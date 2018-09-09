@@ -2356,7 +2356,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if (!ProcessSpecialTxsInBlock(block, pindex, state))
         return false;
 
-    // DASH : MODIFIED TO CHECK MASTERNODE PAYMENTS AND SUPERBLOCKS
+    // POLIS : MODIFIED TO CHECK MASTERNODE PAYMENTS AND SUPERBLOCKS
 
     // It's possible that we simply don't have enough data and this could fail
     // (i.e. block itself could be a correct one and we need to store it),

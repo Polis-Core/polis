@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DASH_DETERMINISTICMNS_H
-#define DASH_DETERMINISTICMNS_H
+#ifndef POLIS_DETERMINISTICMNS_H
+#define POLIS_DETERMINISTICMNS_H
 
 #include "evodb.h"
 #include "providertx.h"
@@ -429,4 +429,4 @@ private:
 
 extern CDeterministicMNManager* deterministicMNManager;
 
-#endif//DASH_DETERMINISTICMNS_H
+#endif//POLIS_DETERMINISTICMNS_H

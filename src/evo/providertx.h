@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef DASH_PROVIDERTX_H
-#define DASH_PROVIDERTX_H
+#ifndef POLIS_PROVIDERTX_H
+#define POLIS_PROVIDERTX_H
 
 #include "primitives/transaction.h"
 #include "consensus/validation.h"
@@ -179,4 +179,4 @@ bool CheckProUpRevTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
 bool IsProTxCollateral(const CTransaction& tx, uint32_t n);
 uint32_t GetProTxCollateralIndex(const CTransaction& tx);
 
-#endif//DASH_PROVIDERTX_H
+#endif//POLIS_PROVIDERTX_H
