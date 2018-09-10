@@ -822,7 +822,7 @@ public:
     bool MintableCoins();
     bool SelectStakeCoins(StakeCoinsSet& setCoins, CAmount nTargetAmount) const;
     bool SelectStakeTPoSCoins(StakeCoinsSet& setCoins, StakeCoinsSet &tposCoins, const TPoSContract &contract) const;
-
+    std::map<CBitcoinAddress, std::vector<COutput>> AvailableCoinsByAddress(bool fConfirmed = true, CAmount maxCoinValue = 0) const;
     // Coin selection
     bool SelectCoinsByDenominations(int nDenom, CAmount nValueMin, CAmount nValueMax, std::vector<CTxDSIn>& vecTxDSInRet, std::vector<COutput>& vCoinsRet, CAmount& nValueRet, int nPrivateSendRoundsMin, int nPrivateSendRoundsMax, bool fNoDuplicateTxIds);
     bool GetCollateralTxDSIn(CTxDSIn& txdsinRet, CAmount& nValueRet) const;

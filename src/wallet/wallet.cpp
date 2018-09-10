@@ -2736,34 +2736,48 @@ bool CWallet::SelectStakeCoins(StakeCoinsSet &setCoins,
     for (const COutput& out : vCoins) {
         //make sure not to outrun target amount
         CScript scriptPubKeyKernel;
-        scriptPubKeyKernel = out.tx->vout[out.i].scriptPubKey;
+        scriptPubKeyKernel = out.tx->tx->vout[out.i].scriptPubKey;
         if(scriptPubKeyKernel.IsPayToScriptHash())
             continue;
         //for now we will comment this out
-        if (nAmountSelected + out.tx->vout[out.i].nValue > nTargetAmount)
+        if (nAmountSelected + out.tx->tx->vout[out.i].nValue > nTargetAmount)
             continue;
         //check for min age
         if (GetTime() - out.tx->GetTxTime() < Params().GetConsensus().nStakeMinAge)
             continue;
         //check that it is matured
-        if (out.nDepth < (out.tx->IsCoinStake() ? Params().GetConsensus().nCoinbaseMaturity : 10))
+        if (out.nDepth < (out.tx->tx->IsCoinStake() ? Params().GetConsensus().nCoinbaseMaturity : 10))
             continue;
         auto it = std::find_if(tposMerchantContracts.begin(), tposMerchantContracts.end(), [&scriptPubKeyKernel](const std::pair<uint256, TPoSContract> &entry) {
             return GetScriptForDestination(entry.second.merchantAddress.Get()) == scriptPubKeyKernel;
         });
         if(it != tposMerchantContracts.end())
             continue;
-        nAmountSelected += out.tx->vout[out.i].nValue; //maybe change here for tpos
+        nAmountSelected += out.tx->tx->vout[out.i].nValue; //maybe change here for tpos
         setCoins.insert(std::make_pair(out.tx, out.i));
     }
     return true;
 }
 
-
+std::map<CBitcoinAddress, std::vector<COutput>> CWallet::AvailableCoinsByAddress(bool fConfirmed, CAmount maxCoinValue) const
+{
+    std::vector<COutput> vCoins;
+    AvailableCoins(vCoins, fConfirmed);
+    std::map<CBitcoinAddress, std::vector<COutput> > mapCoins;
+    BOOST_FOREACH (COutput out, vCoins) {
+                    if (maxCoinValue > 0 && out.tx->tx->vout[out.i].nValue > maxCoinValue)
+                        continue;
+                    CTxDestination address;
+                    if (!ExtractDestination(out.tx->tx->vout[out.i].scriptPubKey, address))
+                        continue;
+                    mapCoins[CBitcoinAddress(address)].push_back(out);
+                }
+    return mapCoins;
+}
 
 bool CWallet::SelectStakeTPoSCoins(CWallet::StakeCoinsSet &setCoins, CWallet::StakeCoinsSet &tposCoins, const TPoSContract &contract) const
 {
-    auto coinsMap = AvailableCoins();
+    auto coinsMap = AvailableCoinsByAddress();
     {
         const std::vector<COutput> &coins = coinsMap[contract.merchantAddress];
         for(auto &&out : coins)
@@ -2772,7 +2786,7 @@ bool CWallet::SelectStakeTPoSCoins(CWallet::StakeCoinsSet &setCoins, CWallet::St
             if (GetTime() - out.tx->GetTxTime() < Params().GetConsensus().nStakeMinAge)
                 continue;
             //check that it is matured
-            if (out.nDepth < (out.tx->IsCoinStake() ? Params().GetConsensus().nCoinbaseMaturity : 10))
+            if (out.nDepth < (out.tx->tx->IsCoinStake() ? Params().GetConsensus().nCoinbaseMaturity : 10))
                 continue;
             //            // if it's not a coinstake this has to be out of tpos contract
             //            if(!out.tx->IsTPoSCoinStake() && out.tx->GetHash() == contract.rawTx.GetHash())
@@ -2786,7 +2800,7 @@ bool CWallet::SelectStakeTPoSCoins(CWallet::StakeCoinsSet &setCoins, CWallet::St
         for(auto &&out : coins)
         {
             //check that it is matured
-            if (out.nDepth < (out.tx->IsCoinStake() ? Params().GetConsensus().nCoinbaseMaturity : 10))
+            if (out.nDepth < (out.tx->tx->IsCoinStake() ? Params().GetConsensus().nCoinbaseMaturity : 10))
                 continue;
             tposCoins.emplace(out.tx, out.i);
         }
@@ -4985,7 +4999,7 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
         return false;
     if(tposContract.IsValid() && tposCoins.empty())
         return false;
-    std::vector< pair<const CWalletTx*, unsigned int> > vwtxPrev;
+    std::vector< std::pair<const CWalletTx*, unsigned int> > vwtxPrev;
     CScript scriptPubKeyKernel;
     //prevent staking a time that won't be accepted
     if (GetAdjustedTime() <= chainActive.Tip()->nTime)
@@ -5007,7 +5021,7 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
         // Read block header
         CBlockHeader block = pindex->GetBlockHeader();
         COutPoint prevoutStake = COutPoint(pcoin.first->GetHash(), pcoin.second);
-        CMutableTransaction tposProxyTx = *pcoin.first;
+        CMutableTransaction tposProxyTx = *pcoin.first->tx;
         auto tposCoinsIt = tposCoins.begin();
         for(size_t i = 0; i <  std::max<size_t>(1, tposCoins.size()); ++i)
         {
@@ -5017,14 +5031,15 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
             if(tposContract.IsValid())
             {
                 auto &nValue = tposProxyTx.vout[prevoutStake.n].nValue;
-                nValue = tposCoinsIt->first->vout[tposCoinsIt->second].nValue;
+                nValue = tposCoinsIt->first->tx->vout[tposCoinsIt->second].nValue;
                 tposStakeCoin = COutPoint(tposCoinsIt->first->GetHash(), tposCoinsIt->second);
                 ++tposCoinsIt;
             }
             uint256 hashProofOfStake = ArithToUint256(0);
             nTxNewTime = GetAdjustedTime();
             //iterates each utxo inside of CheckStakeKernelHash()
-            if (CheckStakeKernelHash(nBits, block, tposProxyTx, prevoutStake, nTxNewTime, nHashDrift, false, hashProofOfStake, true, tposContract.IsValid()))
+            std::shared_ptr<const CTransaction> nTx = &tposProxyTx;
+            if (CheckStakeKernelHash(nBits, block, nTx, prevoutStake, nTxNewTime, nHashDrift, false, hashProofOfStake, true, tposContract.IsValid()))
             {
                 //Double check that this will pass time requirements
                 if (nTxNewTime <= chainActive.Tip()->GetMedianTimePast()) {
@@ -5037,7 +5052,7 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
                 std::vector<std::vector<unsigned char>> vSolutions;
                 txnouttype whichType;
                 CScript scriptPubKeyOut;
-                scriptPubKeyKernel = pcoin.first->vout[pcoin.second].scriptPubKey;
+                scriptPubKeyKernel = pcoin.first->tx->vout[pcoin.second].scriptPubKey;
                 if (!Solver(scriptPubKeyKernel, whichType, vSolutions)) {//check the solver here
                     LogPrintf("CreateCoinStake : failed to parse kernel\n");
                     break;
@@ -5069,7 +5084,7 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
                 {
                     p2shScript = GetScriptForDestination(tposContract.tposAddress.Get());
                 }
-                nCredit = pcoin.first->vout[pcoin.second].nValue;
+                nCredit = pcoin.first->tx->vout[pcoin.second].nValue;
                 unsigned int percentage = 100;
                 if(tposContract.IsValid())
                     percentage = 100 - tposContract.stakePercentage; // first transaction is merchant, so he will need to get only commission
@@ -5143,7 +5158,7 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
     //        }
     //    }
     if(tposContract.IsValid())
-        cout << "this is tpos" << endl;
+        std::cout << "this is tpos" << std::endl;
     //txNew needs to be pubkeyhash instead of scripthash
     // Sign
     int nIn = 0;

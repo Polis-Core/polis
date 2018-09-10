@@ -43,7 +43,7 @@ static const int TPOSEXPORTHEADERWIDTH = 40;
                                 CAmount &commissionAmount,
                                 CBitcoinAddress &tposAddress)
 {
-    if(!wtx.IsCoinStake())
+    if(!wtx.tx->IsCoinStake())
         return false;
      CAmount nCredit = wtx.GetCredit(ISMINE_ALL);
     CAmount nDebit = wtx.GetDebit(ISMINE_ALL);
@@ -53,10 +53,10 @@ static const int TPOSEXPORTHEADERWIDTH = 40;
         tposContracts.emplace_back(pair.second);
      for(auto &&pair : wallet->tposMerchantContracts)
         tposContracts.emplace_back(pair.second);
-     for(size_t i = 2; i < std::min<size_t>(4, wtx.vout.size()); ++i)
+     for(size_t i = 2; i < std::min<size_t>(4, wtx.tx->vout.size()); ++i)
     {
         CTxDestination address;
-        if(ExtractDestination(wtx.vout.at(i).scriptPubKey, address))
+        if(ExtractDestination(wtx.tx->vout.at(i).scriptPubKey, address))
         {
              CBitcoinAddress tmpAddress(address);
              auto it = std::find_if(std::begin(tposContracts), std::end(tposContracts), [tmpAddress](const TPoSContract &entry) {
@@ -64,7 +64,7 @@ static const int TPOSEXPORTHEADERWIDTH = 40;
             });
              if(it == std::end(tposContracts))
                 continue;
-             stakeAmount = wtx.vout[i].nValue;
+             stakeAmount = wtx.tx->vout[i].nValue;
              // at this moment nNet contains net stake reward
             // commission was sent to merchant address, so it was base of tx
             commissionAmount = nNet;
