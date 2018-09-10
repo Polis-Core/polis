@@ -5037,8 +5037,8 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
             }
             uint256 hashProofOfStake = ArithToUint256(0);
             nTxNewTime = GetAdjustedTime();
+            std::shared_ptr<const CTransaction> nTx = std::make_shared<const CTransaction>(*pcoin.first->tx);
             //iterates each utxo inside of CheckStakeKernelHash()
-            std::shared_ptr<const CTransaction> nTx = &tposProxyTx;
             if (CheckStakeKernelHash(nBits, block, nTx, prevoutStake, nTxNewTime, nHashDrift, false, hashProofOfStake, true, tposContract.IsValid()))
             {
                 //Double check that this will pass time requirements
